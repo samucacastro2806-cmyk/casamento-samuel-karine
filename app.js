@@ -19,6 +19,8 @@ function priorityTag(p) {
 }
 
 // ===== INIT =====
+let firebaseSetDoc, firebaseDoc;
+
 function init() {
   loadState();
   // Purgar estrutura v1 incompatível
@@ -29,8 +31,52 @@ function init() {
   state.version = APP_VERSION;
   seedDefaults();
   renderCountdown();
-  navigateTo('dashboard');
+  navigateTo(state.currentPage || 'dashboard');
   setInterval(renderCountdown, 60000);
+  
+  initFirebase();
+}
+
+async function initFirebase() {
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js");
+    const { getFirestore, doc, onSnapshot, setDoc } = await import("https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js");
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyBClVxyatU_5SjvmNTxGjiMRkFnjhQZesk",
+      authDomain: "samuel-e-karine-casamento.firebaseapp.com",
+      projectId: "samuel-e-karine-casamento",
+      storageBucket: "samuel-e-karine-casamento.firebasestorage.app",
+      messagingSenderId: "261532011989",
+      appId: "1:261532011989:web:48dafd0cdf4c611312015c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    window.db = getFirestore(app);
+    firebaseSetDoc = setDoc;
+    firebaseDoc = doc;
+
+    const docRef = doc(window.db, "wedding", "data");
+    onSnapshot(docRef, (docSnap) => {
+      if (window.isSaving) return; // Evita loop de eco
+      if (docSnap.exists()) {
+        const remoteState = docSnap.data();
+        if (remoteState && remoteState.version) {
+          state = remoteState;
+          if (typeof renderPage === 'function' && state.currentPage) {
+            renderPage(state.currentPage);
+          }
+          const sync = document.getElementById('sync-indicator');
+          if (sync) sync.innerHTML = '☁️ <span style="font-size:0.5rem;vertical-align:top;color:var(--success)">Sincronizado</span>';
+        }
+      } else {
+        // Primeiro acesso na nuvem, sobe os dados locais
+        saveState();
+      }
+    });
+  } catch(e) {
+    console.error("Firebase falhou:", e);
+  }
 }
 
 function seedDefaults() {
@@ -216,7 +262,26 @@ function defaultTasks() {
 }
 
 // ===== PERSISTENCE =====
-function saveState() { localStorage.setItem('weddingManager', JSON.stringify(state)); }
+window.isSaving = false;
+async function saveState() { 
+  localStorage.setItem('weddingManager', JSON.stringify(state)); 
+  if (window.db && firebaseSetDoc && firebaseDoc) {
+    window.isSaving = true;
+    try {
+      const sync = document.getElementById('sync-indicator');
+      if (sync) sync.innerHTML = '☁️ <span style="font-size:0.5rem;vertical-align:top;color:var(--gold)">Salvando...</span>';
+      
+      await firebaseSetDoc(firebaseDoc(window.db, "wedding", "data"), state);
+      
+      if (sync) sync.innerHTML = '☁️ <span style="font-size:0.5rem;vertical-align:top;color:var(--success)">Sincronizado</span>';
+    } catch(e) {
+      console.error(e);
+      const sync = document.getElementById('sync-indicator');
+      if (sync) sync.innerHTML = '☁️ <span style="font-size:0.5rem;vertical-align:top;color:red">Erro</span>';
+    }
+    setTimeout(() => { window.isSaving = false; }, 800);
+  }
+}
 function loadState() { const s = localStorage.getItem('weddingManager'); if (s) state = JSON.parse(s); }
 
 // ===== UTILS =====
@@ -342,8 +407,8 @@ function renderSuppliers() {
   const cats = getSuppliersByCategory();
   const allCatNames = state.categories.map(c => c.name);
 
-  // Build tab list: only categories that have suppliers
-  const usedCats = allCatNames.filter(n => cats[n] && cats[n].length > 0);
+  // Build tab list: ALL categories defined in state.categories
+  let usedCats = [...allCatNames];
   
   // Extra cats from suppliers not in state.categories
   Object.keys(cats).forEach(k => { if (!usedCats.includes(k)) usedCats.push(k); });
@@ -365,8 +430,15 @@ function renderSuppliers() {
 
   // Render tab content
   const container = document.getElementById('tab-content');
-  if (!currentSupplierTab || !cats[currentSupplierTab]) {
-    container.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--ink-3)">Nenhum fornecedor cadastrado ainda. Clique em + Fornecedor para adicionar.</div>';
+  if (!currentSupplierTab) return;
+
+  const suppliers = cats[currentSupplierTab] || [];
+  
+  if (suppliers.length === 0) {
+    container.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--ink-3)">
+      Nenhum fornecedor cadastrado em "<b>${currentSupplierTab}</b>" ainda. <br><br>
+      <button class="btn btn-primary" onclick="openSupplierModal(null, '${currentSupplierTab.replace(/'/g, '\\\'')}')">Adicionar Fornecedor Aqui</button>
+    </div>`;
     document.getElementById('suppliers-total').textContent = formatMoney(getTotalSpent());
     document.getElementById('suppliers-count').textContent = state.suppliers.length;
     return;
@@ -659,6 +731,7 @@ function renderBudget() {
               ${formatMoney(spent)}
             </div>
             <div style="display:table-cell;vertical-align:middle;width:15%;text-align:right">
+              <button class="btn btn-outline btn-xs" onclick="openCategoryModal('${cat.id}')">✏️</button>
               <button class="btn btn-danger btn-xs" onclick="deleteCategory('${cat.id}')">✕</button>
             </div>
           </div>
@@ -673,10 +746,66 @@ function renderBudget() {
 }
 
 function addCategory() {
-  const name = prompt('Nome da nova categoria:');
-  if (!name) return;
-  state.categories.push({ id: genId(), name: name, estimated: 0 });
-  saveState(); renderBudget(); showToast('Categoria adicionada!');
+  openCategoryModal();
+}
+
+function openCategoryModal(id = null) {
+  const modal = document.getElementById('modal-category');
+  const form = document.getElementById('category-form');
+  form.reset();
+  
+  if (id) {
+    const c = state.categories.find(x => x.id === id);
+    if (c) {
+      document.getElementById('modal-category-title').textContent = 'Editar Categoria';
+      form.elements['cat-name'].value = c.name;
+      form.elements['cat-estimated'].value = c.estimated;
+      form.elements['cat-id'].value = c.id;
+    }
+  } else {
+    document.getElementById('modal-category-title').textContent = 'Nova Categoria';
+    form.elements['cat-id'].value = '';
+  }
+  
+  modal.classList.add('active');
+}
+
+window.addEmoji = function(emoji) {
+  const input = document.getElementById('cat-name-input');
+  input.value = emoji + ' ' + input.value;
+  input.focus();
+}
+
+function saveCategory() {
+  const form = document.getElementById('category-form');
+  const id = form.elements['cat-id'].value;
+  const name = form.elements['cat-name'].value;
+  const estimated = parseFloat(form.elements['cat-estimated'].value) || 0;
+  
+  if (!name) return showToast('Preencha o nome', '⚠️');
+  
+  if (id) {
+    const idx = state.categories.findIndex(x => x.id === id);
+    if (idx >= 0) {
+      const oldName = state.categories[idx].name;
+      state.categories[idx].name = name;
+      state.categories[idx].estimated = estimated;
+      
+      if (oldName !== name) {
+        state.suppliers.forEach(s => {
+          if (s.category === oldName) s.category = name;
+        });
+      }
+    }
+  } else {
+    state.categories.push({ id: genId(), name, estimated });
+  }
+  
+  saveState(); 
+  closeModal('modal-category'); 
+  renderBudget();
+  if (state.currentPage === 'suppliers') renderSuppliers();
+  showToast(id ? 'Categoria atualizada!' : 'Categoria adicionada!');
 }
 
 function updateCategoryValue(id, val) {
