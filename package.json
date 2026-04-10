@@ -1,0 +1,11 @@
+{
+  "name": "casamento-samuel-karine",
+  "version": "1.0.0",
+  "description": "Sistema de gerenciamento de casamento Samuel & Karine",
+  "scripts": {
+    "start": "npx serve . -p $PORT --no-clipboard"
+  },
+  "dependencies": {
+    "serve": "^14.2.3"
+  }
+}

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Samuel & Karine — Casamento 29/08/2026</title>
+  <meta name="description" content="Organizador completo do casamento de Samuel & Karine — 29 de agosto de 2026">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="logo.png" alt="S & K" style="width:90px;height:auto;margin-bottom:8px;filter:invert(1) brightness(2);">
+    <div class="subtitle">29 · Agosto · 2026</div>
+  </div>
+  <div class="countdown-box">
+    <div class="days" id="countdown-days">---</div>
+    <div class="label">dias para o grande dia</div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+      <span class="icon">💒</span> Painel Geral
+    </a>
+    <a class="nav-item" data-page="suppliers" onclick="navigateTo('suppliers')">
+      <span class="icon">🏪</span> Fornecedores
+    </a>
+    <a class="nav-item" data-page="budget" onclick="navigateTo('budget')">
+      <span class="icon">💰</span> Financeiro
+    </a>
+    <a class="nav-item" data-page="checklist" onclick="navigateTo('checklist')">
+      <span class="icon">✅</span> Checklist
+    </a>
+    <a class="nav-item" data-page="guests" onclick="navigateTo('guests')">
+      <span class="icon">👥</span> RSVP
+    </a>
+    <a class="nav-item" data-page="tasks" onclick="navigateTo('tasks')">
+      <span class="icon">📋</span> Tarefas
+    </a>
+    <a class="nav-item" data-page="timeline" onclick="navigateTo('timeline')">
+      <span class="icon">🕐</span> Cronograma
+    </a>
+    <a class="nav-item" data-page="whatsapp" onclick="navigateTo('whatsapp')">
+      <span class="icon">📱</span> WhatsApp
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="btn btn-gold btn-sm" style="flex:1" onclick="exportData()">💾 Backup</button>
+    <button class="btn btn-outline btn-sm" style="flex:1;color:rgba(255,255,255,0.5);border-color:rgba(255,255,255,0.15)" onclick="importData()">📥 Importar</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+      <h2 id="page-title">💒 Painel Geral</h2>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="budget-pill" id="budget-pill">Carregando...</span>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="page active" id="page-dashboard">
+      <div class="grid-4" style="margin-bottom:18px">
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value" id="dash-total-spent">R$ 0</div>
+          <div class="stat-label">Total Investido</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-icon">💵</div>
+          <div class="stat-value" id="dash-remaining">R$ 0</div>
+          <div class="stat-label">Saldo Disponível</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="dash-guests">0/0</div>
+          <div class="stat-label">Confirmados / Total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📋</div>
+          <div class="stat-value" id="dash-tasks">0/0</div>
+          <div class="stat-label">Tarefas Concluídas</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SUPPLIERS (TABS) ===== -->
+    <div class="page" id="page-suppliers">
+      <!-- Top bar -->
+      <div class="suppliers-header">
+        <div>
+          <span class="suppliers-count-label">Total: <strong id="suppliers-count">0</strong> fornecedores · <strong id="suppliers-total">R$ 0</strong></span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openSupplierModal()">+ Fornecedor</button>
+      </div>
+      <!-- Tab bar -->
+      <div class="tab-bar-wrapper" id="tab-bar"></div>
+      <!-- Tab content area -->
+      <div id="tab-content"></div>
+    </div>
+
+    <!-- ===== BUDGET ===== -->
+    <div class="page" id="page-budget">
+      <div class="grid-3" style="margin-bottom:18px">
+        <div class="stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value" id="budget-total-spent">R$ 0</div>
+          <div class="stat-label">Total Investido</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-icon">💵</div>
+          <div class="stat-value" id="budget-remaining">R$ 0</div>
+          <div class="stat-label">Saldo Disponível</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-value" id="budget-limit">R$ 51.000</div>
+          <div class="stat-label">Limite Total</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Progresso do Orçamento</h3>
+          <span id="budget-pct" style="font-size:0.82rem;color:var(--ink-3)">0%</span>
+        </div>
+        <div class="progress-bar" style="height:6px;margin-bottom:14px">
+          <div class="progress-fill gold" id="budget-bar" style="width:0%"></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+          <label style="font-size:0.72rem;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.5px">Ajustar limite:</label>
+          <input type="number" id="budget-limit-input" class="form-control" style="width:140px" value="51000">
+          <button class="btn btn-primary btn-sm" onclick="updateBudgetLimit()">Salvar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>📅 Previsão de Entradas</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:0.75rem;color:var(--ink-3)">Total: <strong id="income-total">R$0</strong> · Recebido: <strong id="income-received">R$0</strong></span>
+            <button class="btn btn-primary btn-sm" onclick="addIncome()">+ Entrada</button>
+          </div>
+        </div>
+        <div id="income-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Detalhamento por Categoria</h3>
+        </div>
+        <div id="budget-breakdown"></div>
+      </div>
+    </div>
+
+    <!-- ===== CHECKLIST ===== -->
+    <div class="page" id="page-checklist">
+      <div class="card">
+        <div class="card-header">
+          <h3>Checklist do Casamento</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select class="form-control" id="checklist-filter" onchange="renderChecklistPage()" style="width:120px">
+              <option value="all">Todos</option>
+              <option value="pending">Pendentes</option>
+              <option value="done">Concluídos</option>
+            </select>
+            <select class="form-control" id="checklist-priority-filter" onchange="renderChecklistPage()" style="width:150px">
+              <option value="all">Prioridades</option>
+              <option value="urgente">🔴 Urgente</option>
+              <option value="precisa">🟡 Precisa ser feito</option>
+              <option value="prazo_maior">🟢 Prazo maior</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="addChecklistCategory()">+ Categoria</button>
+            <button class="btn btn-primary btn-sm" onclick="addChecklistItem()">+ Item</button>
+          </div>
+        </div>
+        <div style="margin-bottom:14px">
+          <span id="checklist-progress-text" style="font-size:0.8rem;color:var(--ink-3)">0/0</span>
+          <div class="progress-bar" style="margin-top:5px">
+            <div class="progress-fill dark" id="checklist-progress-bar" style="width:0%"></div>
+          </div>
+        </div>
+        <div id="checklist-items"></div>
+      </div>
+    </div>
+
+    <!-- ===== GUESTS / RSVP ===== -->
+    <div class="page" id="page-guests">
+      <div class="grid-4" style="margin-bottom:18px">
+        <div class="stat-card"><div class="stat-value" id="guests-total">0</div><div class="stat-label">Total Convidados</div></div>
+        <div class="stat-card success"><div class="stat-value" id="guests-confirmed">0</div><div class="stat-label">Confirmados</div></div>
+        <div class="stat-card gold"><div class="stat-value" id="guests-companions">0</div><div class="stat-label">Acompanhantes</div></div>
+        <div class="stat-card"><div class="stat-value" id="guests-total-people">0</div><div class="stat-label">Total Pessoas</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Convidados & RSVP</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="guest-search" class="form-control" placeholder="Buscar..." style="width:150px" oninput="renderGuests()">
+            <select class="form-control" id="guest-filter" onchange="renderGuests()" style="width:120px">
+              <option value="all">Todos</option>
+              <option value="confirmed">Confirmados</option>
+              <option value="pending">Pendentes</option>
+              <option value="declined">Recusados</option>
+            </select>
+            <button class="btn btn-primary" onclick="openGuestModal()">+ Convidado</button>
+          </div>
+        </div>
+        <div id="guests-list" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+      </div>
+    </div>
+
+    <!-- ===== TASKS ===== -->
+    <div class="page" id="page-tasks">
+      <div class="card">
+        <div class="card-header">
+          <h3>Tarefas</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="tasks-progress" style="font-size:0.8rem;color:var(--ink-3)">0/0</span>
+            <select class="form-control" id="task-filter" onchange="renderTasks()" style="width:120px">
+              <option value="all">Todas</option>
+              <option value="pending">Pendentes</option>
+              <option value="done">Concluídas</option>
+              <option value="urgente">🔴 Urgente</option>
+            </select>
+            <button class="btn btn-primary" onclick="openTaskModal()">+ Tarefa</button>
+          </div>
+        </div>
+        <div id="tasks-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== TIMELINE ===== -->
+    <div class="page" id="page-timeline">
+      <div class="card">
+        <div class="card-header">
+          <h3>Cronograma — 28 a 30/08/2026</h3>
+          <button class="btn btn-primary btn-sm" onclick="addTimelineItem()">+ Horário</button>
+        </div>
+        <p style="color:var(--ink-3);font-size:0.8rem;margin-bottom:18px">
+          Local: Alto do Mirante, Anápolis · Clique ✏️ para editar
+        </p>
+        <div class="timeline" id="timeline-items"></div>
+      </div>
+    </div>
+
+    <!-- ===== WHATSAPP ===== -->
+    <div class="page" id="page-whatsapp">
+      <div class="card">
+        <div class="card-header"><h3>📱 Orientações para WhatsApp</h3></div>
+        <p style="color:var(--ink-3);margin-bottom:18px;font-size:0.85rem">Instruções para criar os grupos e listas de transmissão.</p>
+        <div class="whatsapp-box">
+          <h4 style="color:#16a34a;margin-bottom:10px;font-size:0.9rem">1. Grupo de Padrinhos</h4>
+          <ul style="font-size:0.84rem;line-height:1.9;padding-left:18px">
+            <li><strong>Nome:</strong> 💒 Padrinhos S&K — 29/08/2026</li>
+            <li><strong>Foto:</strong> Logo do casamento ou foto de vocês</li>
+            <li><strong>Descrição:</strong> "Grupo oficial dos padrinhos 💍"</li>
+            <li>Fixe a mensagem com data, horário e local</li>
+            <li>Defina que apenas admins enviam mensagens</li>
+          </ul>
+        </div>
+        <div class="whatsapp-box">
+          <h4 style="color:#16a34a;margin-bottom:10px;font-size:0.9rem">2. Lista de Transmissão</h4>
+          <ul style="font-size:0.84rem;line-height:1.9;padding-left:18px">
+            <li><strong>Nome:</strong> Casamento S&K ✨</li>
+            <li>⚠️ Convidados precisam ter o número salvo</li>
+            <li>Limite: 256 contatos por lista</li>
+          </ul>
+        </div>
+        <div class="whatsapp-box">
+          <h4 style="color:#16a34a;margin-bottom:10px;font-size:0.9rem">3. Mensagens Modelo</h4>
+          <div style="background:white;border-radius:8px;padding:14px;font-size:0.84rem;margin-top:8px">
+            <strong>Save the Date:</strong><br>
+            <em>"Olá! 🌿💍 Reserve na agenda: 29 de agosto de 2026 celebraremos nosso casamento! Em breve o convite oficial. Com amor, Samuel & Karine 💕"</em>
+          </div>
+          <div style="background:white;border-radius:8px;padding:14px;font-size:0.84rem;margin-top:8px">
+            <strong>RSVP:</strong><br>
+            <em>"Olá! 💒✨ Confirme presença no nosso casamento 29/08/2026 às 16:30h no Alto do Mirante, Anápolis. Responda: ✅ Vou! ou ❌ Não poderei ir. 💕 Samuel & Karine"</em>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Supplier Modal -->
+<div class="modal-overlay" id="modal-supplier">
+  <div class="modal">
+    <h3>Fornecedor / Orçamento</h3>
+    <form id="supplier-form" onsubmit="event.preventDefault(); saveSupplier()">
+      <input type="hidden" name="s-id">
+      <div class="grid-2">
+        <div class="form-group"><label>Nome do Fornecedor</label><input name="s-name" class="form-control" placeholder="Ex: Buffet Delícia" required></div>
+        <div class="form-group"><label>Aba / Categoria</label>
+          <select name="s-category" class="form-control" id="s-category-select"></select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label>Status</label>
+          <select name="s-status" class="form-control">
+            <option value="pesquisando">🔍 Pesquisando</option>
+            <option value="negociando">💬 Negociando</option>
+            <option value="fechado">✅ Fechado</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Valor (R$)</label><input type="number" name="s-value" class="form-control" step="0.01" placeholder="0,00"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label>Telefone</label><input name="s-phone" class="form-control" placeholder="(62) 99999-9999"></div>
+        <div class="form-group"><label>Link do WhatsApp / Contato</label><input name="s-whatsapp" class="form-control" placeholder="https://wa.me/5562999999999 ou link de contato"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label>Link Google Drive</label><input name="s-drive" class="form-control" placeholder="https://drive.google.com/..."></div>
+        <div class="form-group"><label>Instagram</label><input name="s-insta" class="form-control" placeholder="https://instagram.com/..."></div>
+      </div>
+      <div class="form-group"><label>Observações / O que inclui / Diferenciais</label><textarea name="s-notes" class="form-control" placeholder="Detalhes do orçamento, diferenciais, quantidades..."></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-supplier')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar Fornecedor</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Guest Modal -->
+<div class="modal-overlay" id="modal-guest">
+  <div class="modal">
+    <h3>Convidado</h3>
+    <form id="guest-form" onsubmit="event.preventDefault(); saveGuest()">
+      <input type="hidden" name="g-id">
+      <div class="grid-2">
+        <div class="form-group"><label>Nome</label><input name="g-name" class="form-control" required></div>
+        <div class="form-group"><label>Telefone</label><input name="g-phone" class="form-control"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label>Status</label><select name="g-status" class="form-control"><option value="pending">⏳ Pendente</option><option value="confirmed">✅ Confirmado</option><option value="declined">❌ Recusado</option></select></div>
+        <div class="form-group"><label>Acompanhantes</label><input type="number" name="g-companions" class="form-control" value="0" min="0"></div>
+      </div>
+      <div class="form-group"><label>Observações</label><textarea name="g-notes" class="form-control"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-guest')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal-overlay" id="modal-task">
+  <div class="modal">
+    <h3>Tarefa</h3>
+    <form id="task-form" onsubmit="event.preventDefault(); saveTask()">
+      <input type="hidden" name="t-id">
+      <div class="form-group"><label>Descrição</label><input name="t-text" class="form-control" required></div>
+      <div class="grid-2">
+        <div class="form-group"><label>Prioridade</label><select name="t-priority" class="form-control"><option value="urgente">🔴 Urgente</option><option value="precisa">🟡 Precisa ser feito</option><option value="prazo_maior">🟢 Prazo maior</option></select></div>
+        <div class="form-group"><label>Prazo</label><input type="date" name="t-due" class="form-control"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-task')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="Imagem ampliada">
+</div>
+
+<!-- Toast -->
+<div id="toast-container" class="toast-container"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
