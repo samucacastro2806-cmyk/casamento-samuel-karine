@@ -444,7 +444,6 @@ function renderSuppliers() {
     return;
   }
 
-  const suppliers = cats[currentSupplierTab];
   const cheapest = getCheapestInCategory(suppliers);
   const preferred = getPreferredInCategory(suppliers);
   const catTotal = suppliers.reduce((s, x) => s + (Number(x.value) || 0), 0);
